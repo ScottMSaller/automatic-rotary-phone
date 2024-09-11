@@ -20,3 +20,21 @@ app.post('/process-text', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });
+
+snap.addEventListener('click', () => {
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const dataURL = canvas.toDataURL('image/png');
+
+  Tesseract.recognize(dataURL, 'eng')
+    .then(({ data: { text } }) => {
+      // Post-process the text to remove unwanted characters
+      const filteredText = text.replace(/[^0-9A-Za-z\s]/g, '');
+      extractedText.value = filteredText;
+
+      sendTextToBackend(filteredText);
+    })
+    .catch((error) => {
+      console.error("Error during text extraction: ", error);
+    });
+});
