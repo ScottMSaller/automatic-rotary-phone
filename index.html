@@ -9,13 +9,13 @@
   <h1>Take a Photo and Extract Text</h1>
 
   <!-- Video element to display camera feed -->
-  <video id="video" autoplay style="width: 1920px; height: 1080px;"></video>
+  <video id="video" autoplay style="width: 640px; height: 480px;"></video>
 
   <!-- Button to take a snapshot -->
   <button id="snap">Take Photo</button>
 
   <!-- Canvas to render the captured image -->
-  <canvas id="canvas" width="1920" height="1080" style="display: none;"></canvas>
+  <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
 
   <!-- Display the extracted text -->
   <p>Extracted Text:</p>
@@ -25,14 +25,13 @@
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
 
   <script>
-    // Access the video and canvas elements
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     const snap = document.getElementById('snap');
     const extractedText = document.getElementById('extractedText');
 
-    // Use getUserMedia to access the camera
+    // Access the camera feed
     navigator.mediaDevices.getUserMedia({ video: true })
       .then((stream) => {
         video.srcObject = stream;
@@ -41,29 +40,41 @@
         console.error("Error accessing camera: ", err);
       });
 
-    // Event listener for taking the photo
+    // Grayscale filter function
+    function applyGrayscale(context, width, height) {
+      const imageData = context.getImageData(0, 0, width, height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+        data[i] = data[i + 1] = data[i + 2] = avg;
+      }
+
+      context.putImageData(imageData, 0, 0);
+    }
+
+    // Take a photo and extract text with a grayscale filter and whitelist
     snap.addEventListener('click', () => {
-      // Draw the current frame from the video onto the canvas
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Convert the canvas to a Data URL
+      // Apply grayscale filter
+      applyGrayscale(context, canvas.width, canvas.height);
+
       const dataURL = canvas.toDataURL('image/png');
 
-      // Use Tesseract.js to extract text from the captured image
-      Tesseract.recognize(dataURL, 'eng')
-        .then(({ data: { text } }) => {
-          // Display the extracted text in the textarea
-          extractedText.value = text;
-
-          // Send the extracted text to the backend (if necessary)
-          sendTextToBackend(text);
-        })
-        .catch((error) => {
-          console.error("Error during text extraction: ", error);
-        });
+      // Use Tesseract.js with character whitelist to recognize text
+      Tesseract.recognize(dataURL, 'eng', {
+        tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+      })
+      .then(({ data: { text } }) => {
+        extractedText.value = text;
+        sendTextToBackend(text);
+      })
+      .catch((error) => {
+        console.error("Error during text extraction: ", error);
+      });
     });
 
-    // Function to send the extracted text to the backend
     function sendTextToBackend(text) {
       fetch('/process-text', {
         method: 'POST',
@@ -72,14 +83,15 @@
         },
         body: JSON.stringify({ text }),
       })
-        .then(response => response.json())
-        .then(data => {
-          console.log("Response from server: ", data);
-        })
-        .catch(error => {
-          console.error("Error sending text to backend: ", error);
-        });
+      .then(response => response.json())
+      .then(data => {
+        console.log("Response from server: ", data);
+      })
+      .catch(error => {
+        console.error("Error sending text to backend: ", error);
+      });
     }
   </script>
 </body>
 </html>
+
