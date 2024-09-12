@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="./index.js"></script>
+  <script src="index.js"></script>
   <title>Photo Text Extraction</title>
 </head>
 <body>
@@ -24,6 +24,14 @@
 
   <!-- Tesseract.js script -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <script>
+  Tesseract.recognize('data:image/png;base64,...', 'eng', {
+    tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+  }, {
+    workerPath: '/path/to/worker.js', // Use WebAssembly worker path
+    corePath: '/path/to/tesseract-core.wasm.js' // Ensure WASM is used
+  });
+</script>
 
   <script>
     const video = document.getElementById('video');
