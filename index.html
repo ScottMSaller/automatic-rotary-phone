@@ -10,13 +10,12 @@
   <h1>Take a Photo and Extract Text</h1>
 
   <!-- Video element to display camera feed -->
-  <video id="video" autoplay style="width: 640px; height: 480px;"></video>
+  <input type="file" accept="image/*" capture="camera">
 
   <!-- Button to take a snapshot -->
-  <button id="snap">Take Photo</button>
+  <button id="snap">continue</button>
 
   <!-- Canvas to render the captured image -->
-  <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
 
   <!-- Display the extracted text -->
   <p>Extracted Text:</p>
